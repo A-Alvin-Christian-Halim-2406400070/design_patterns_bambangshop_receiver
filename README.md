@@ -59,25 +59,25 @@ You can install Postman via this website: https://www.postman.com/downloads/
     -   Open another new terminal, edit `ROCKET_PORT` in `.env` to `8003`, then execute `cargo run`.
 
 ## Mandatory Checklists (Subscriber)
--   [ ] Clone https://gitlab.com/ichlaffterlalu/bambangshop-receiver to a new repository.
+-   [x] Clone https://gitlab.com/ichlaffterlalu/bambangshop-receiver to a new repository.
 -   **STAGE 1: Implement models and repositories**
-    -   [ ] Commit: `Create Notification model struct.`
-    -   [ ] Commit: `Create SubscriberRequest model struct.`
-    -   [ ] Commit: `Create Notification database and Notification repository struct skeleton.`
-    -   [ ] Commit: `Implement add function in Notification repository.`
-    -   [ ] Commit: `Implement list_all_as_string function in Notification repository.`
-    -   [ ] Write answers of your learning module's "Reflection Subscriber-1" questions in this README.
+    -   [x] Commit: `Create Notification model struct.`
+    -   [x] Commit: `Create SubscriberRequest model struct.`
+    -   [x] Commit: `Create Notification database and Notification repository struct skeleton.`
+    -   [x] Commit: `Implement add function in Notification repository.`
+    -   [x] Commit: `Implement list_all_as_string function in Notification repository.`
+    -   [x] Write answers of your learning module's "Reflection Subscriber-1" questions in this README.
 -   **STAGE 3: Implement services and controllers**
-    -   [ ] Commit: `Create Notification service struct skeleton.`
-    -   [ ] Commit: `Implement subscribe function in Notification service.`
-    -   [ ] Commit: `Implement subscribe function in Notification controller.`
-    -   [ ] Commit: `Implement unsubscribe function in Notification service.`
-    -   [ ] Commit: `Implement unsubscribe function in Notification controller.`
-    -   [ ] Commit: `Implement receive_notification function in Notification service.`
-    -   [ ] Commit: `Implement receive function in Notification controller.`
-    -   [ ] Commit: `Implement list_messages function in Notification service.`
-    -   [ ] Commit: `Implement list function in Notification controller.`
-    -   [ ] Write answers of your learning module's "Reflection Subscriber-2" questions in this README.
+    -   [x] Commit: `Create Notification service struct skeleton.`
+    -   [x] Commit: `Implement subscribe function in Notification service.`
+    -   [x] Commit: `Implement subscribe function in Notification controller.`
+    -   [x] Commit: `Implement unsubscribe function in Notification service.`
+    -   [x] Commit: `Implement unsubscribe function in Notification controller.`
+    -   [x] Commit: `Implement receive_notification function in Notification service.`
+    -   [x] Commit: `Implement receive function in Notification controller.`
+    -   [x] Commit: `Implement list_messages function in Notification service.`
+    -   [x] Commit: `Implement list function in Notification controller.`
+    -   [x] Write answers of your learning module's "Reflection Subscriber-2" questions in this README.
 
 ## Your Reflections
 This is the place for you to write reflections:
@@ -86,4 +86,33 @@ This is the place for you to write reflections:
 
 #### Reflection Subscriber-1
 
+> In this tutorial, we used RwLock<> to synchronise the use of Vec of Notifications. Explain why
+it is necessary for this case, and explain why we do not use Mutex<> instead?
+
+Pada service ini, sebagian besar operasi yang kita lakukan pada notification adalah operasi read, dan karena operasi read bukanlah operasi yang dapat mempengaruhi critical section maka sebaiknya kita tidak lock operasi read tapi hanya lock operasi write. Hal ini berguna agar kita dapat memanfaatkan concurrency dan memungkinkan banyak readers untuk membaca data notification dalam waktu yang sama agar program lebih efisien. Mutex<> akan memblokir seluruh thread saat read dan write sehingga kita tidak dapat memanfaatkan concurrency.
+
+> In this tutorial, we used lazy_static external library to define Vec and DashMap as a “static”
+variable. Compared to Java where we can mutate the content of a static variable via a
+static function, why did not Rust allow us to do so?
+
+Rust tidak memperbolehkan kita untuk mengubah nilai static variable menggunakan static function agar program kita bersifat thread-safe. Apabila server yang kita gunakan memiliki kemampuan multi-threading maka jika kita tidak menghandle hal tersebut, contohnya dengan menggunakan mutex atau rwlock, maka mengubah nilai suatu variabel dapat beresiko mengakibatkan race condition. Rust ingin mencegah terjadinya race condition makannya kita tidak bisa mengubah nilai static variable menggunakan static function.
 #### Reflection Subscriber-2
+
+> Have you explored things outside of the steps in the tutorial, for example: src/lib.rs? If not,
+explain why you did not do so. If yes, explain things that you have learned from those other
+parts of code.
+
+Saya sudah membaca sedikit kode `src/lib.rs`. Fungsi utama dari kode tersebut adalah untuk membaca dan memuat informasi dari file `.env`. Hal tersebut dibuat menggunakan library `dotenvy::dotenv` dan juga fungsi `generate()`. Fungsi tersebut mencari env variable dari .env yang mulai dengan prefix `APP_` lalu mengoveride default parameters/variables yang sesuai. contohnya env variable `APP_INSTANCE_ROOT_URL` akan mengoveride `instance_root_url`. Selain itu `lib.rs` juga mendefinisikan beberapa custom error function dan juga fungsi `compose_error_response()` untuk membuat JSON error response yang konsisten
+
+> Since you have completed the tutorial by now and have tried to test your notification system
+by spawning multiple instances of Receiver, explain how Observer pattern eases you to plug
+in more subscribers. How about spawning more than one instance of Main app, will it still be
+easy enough to add to the system?
+
+Observer pattern memudahkan kita untuk menambahkan lebih banyak subscriber karena kita tidak perlu mengubah kode dari publisher. Publisher mengetahui bahwa semua jenis subscriber akan mengimplementasikan Observer interface maka publisher tidak perlu mengetahui implementasi konkret dari semua fungsi dari subscriber tersebut. Namun apabila kita memiliki 2 instance Main app, ada tantangan baru. Jika 1 subscriber hanya dapat terhubung dengan satu instance, maka kita harus memastikkan apabila ada perubahan di instance Main app yang lain, subscriber tersebut tetap harus mendapatkan notifikasinya.
+
+> Have you tried to make your own Tests, or enhance documentation on your Postman
+collection? If you have tried those features, tell us whether it is useful for your work (it can be
+your tutorial work or your Group Project)
+
+Iya, saya sudah memlekukan tests saya sendiri. Salah satu test yang saya lakukan adalah test bahwa jika sebuah subscriber unsubscribe ke semua produk, maka seharusnya observer tersebut tidak mendapatkan notifikasi. Selain itu saya juga sudah menambahkan beberapa dokumentasi saya sendiri. Saya percaya bahwa fitur-fitur tersebut akan membantu dalam tugas kelompok saya agar API yang saya buat dapat dengan mudah dipahami oleh tim saya.
